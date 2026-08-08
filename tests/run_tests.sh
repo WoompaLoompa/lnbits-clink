@@ -17,7 +17,11 @@ trap 'rm -rf "$WORK"' EXIT
 ln -s "$REPO_ROOT" "$WORK/clink"
 cd "$WORK"
 
-if [ -x "$REPO_ROOT/.venv/bin/python" ]; then
+# The protocol tests import `lnbits`, so prefer a Python that has it
+# installed (PYTEST_PYTHON, then a repo-local .venv, then system python3).
+if [ -n "${PYTEST_PYTHON:-}" ]; then
+  exec "$PYTEST_PYTHON" -m pytest clink/tests "$@"
+elif [ -x "$REPO_ROOT/.venv/bin/python" ]; then
   exec "$REPO_ROOT/.venv/bin/python" -m pytest clink/tests "$@"
 else
   exec python3 -m pytest clink/tests "$@"

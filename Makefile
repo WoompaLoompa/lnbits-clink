@@ -30,6 +30,7 @@ checkblack:
 test:
 	PYTHONUNBUFFERED=1 \
 	DEBUG=true \
+	PYTEST_PYTHON="$${PYTEST_PYTHON:-}" \
 	bash tests/run_tests.sh
 
 pre-commit:
