@@ -1,0 +1,15 @@
+{
+  "id": "clink",
+  "name": "CLINK",
+  "short_description": "Nostr-native Lightning: offers, subscriptions and wallet debits",
+  "tile": "/clink/static/clink.png",
+  "min_lnbits_version": "1.0.0",
+  "license": "GPL-3.0",
+  "contributors": [
+    {
+      "name": "WoompaLoompa",
+      "uri": "https://github.com/WoompaLoompa",
+      "role": "Developer"
+    }
+  ]
+}

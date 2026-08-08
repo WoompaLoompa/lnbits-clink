@@ -1,0 +1,7 @@
+# Files that must not be shipped inside the extension release archive.
+tests/ export-ignore
+.github/ export-ignore
+tools/ export-ignore
+.gitignore export-ignore
+Makefile export-ignore
+pyproject.toml export-ignore

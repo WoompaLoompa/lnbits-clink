@@ -1,0 +1,21 @@
+{% extends "base.html" %} {% from "macros.jinja" import window_vars with context
+%} {% block scripts %} {{ window_vars(user) }}
+<script src="{{ static_url_for('clink/static', path='js/index.js') }}"></script>
+{% endblock %} {% block page %}
+<q-card flat>
+  <q-card-section>
+    <div class="text-h5 q-mb-md">
+      <img
+        src="{{ static_url_for('clink/static', path='clink.png') }}"
+        style="height: 32px; vertical-align: middle; margin-right: 8px"
+      />
+      CLINK
+      <small class="text-grey">v0.1.0</small>
+    </div>
+    <p>
+      Nostr-native Lightning payments for LNbits. Offers, subscriptions and
+      wallet debits over CLINK.
+    </p>
+  </q-card-section>
+</q-card>
+{% endblock %}

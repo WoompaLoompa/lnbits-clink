@@ -1,0 +1,105 @@
+[project]
+name = "lnbits-clink"
+version = "0.1.0"
+requires-python = ">=3.10,<3.13"
+description = "Nostr-native Lightning payments for LNbits: offers, subscriptions and wallet debits over CLINK."
+authors = [{ name = "WoompaLoompa", email = "06bc1a977d@atomicmail.io" }]
+urls = { Homepage = "https://github.com/WoompaLoompa/lnbits-clink", Repository = "https://github.com/WoompaLoompa/lnbits-clink" }
+
+dependencies = ["lnbits>1"]
+
+[project.license]
+text = "GPL-3.0"
+
+[tool.uv]
+dev-dependencies = [
+    "black",
+    "pytest-asyncio",
+    "pytest",
+    "mypy",
+    "pre-commit",
+    "ruff",
+]
+
+[tool.mypy]
+exclude = "(nostr/*)"
+plugins = ["pydantic.mypy"]
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+warn_untyped_fields = true
+
+[[tool.mypy.overrides]]
+module = [
+  "lnbits.*",
+  "lnurl.*",
+  "loguru.*",
+  "fastapi.*",
+  "pydantic.*",
+  "pyqrcode.*",
+  "shortuuid.*",
+  "httpx.*",
+]
+ignore_missing_imports = "True"
+
+[tool.pytest.ini_options]
+log_cli = false
+testpaths = [
+  "tests"
+]
+
+[tool.black]
+line-length = 88
+target-version = ["py310", "py311"]
+
+[tool.ruff]
+# Same as Black. + 10% rule of black
+line-length = 88
+exclude = [
+    "nostr",
+]
+target-version = "py310"
+
+[tool.ruff.lint]
+# Enable:
+# F - pyflakes
+# E - pycodestyle errors
+# W - pycodestyle warnings
+# I - isort
+# A - flake8-builtins
+# C - mccabe
+# N - naming
+# UP - pyupgrade
+# RUF - ruff
+# B - bugbear
+select = ["F", "E", "W", "I", "A", "C", "N", "UP", "RUF", "B"]
+ignore = ["C901"]
+
+# Allow autofix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+# needed for pydantic
+[tool.ruff.lint.pep8-naming]
+classmethod-decorators = [
+    "validator",
+    "root_validator",
+]
+
+# The repo basename `lnbits-clink` is not a valid Python module name, so the
+# package `__init__.py` files trigger N999. The extension is loaded by LNbits
+# under the module name `clink`, so this is expected.
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["N999"]
+
+[tool.ruff.lint.flake8-bugbear]
+# Allow default arguments like, e.g., `data: List[str] = fastapi.Query(None)`.
+extend-immutable-calls = [
+    "fastapi.Depends",
+    "fastapi.Query",
+]

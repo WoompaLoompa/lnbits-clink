@@ -1,0 +1,76 @@
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create GitHub release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ github.ref_name }}
+        run: |
+          gh release create "$tag" --generate-notes
+
+  registry-pr:
+    needs: [release]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout lnbits-extensions fork
+        uses: actions/checkout@v4
+        with:
+          repository: WoompaLoompa/lnbits-extensions
+          ref: main
+          token: ${{ secrets.EXT_GITHUB }}
+          path: './lnbits-extensions'
+
+      - name: Checkout lnbits-clink (tooling)
+        uses: actions/checkout@v4
+        with:
+          repository: WoompaLoompa/lnbits-clink
+          ref: ${{ github.ref_name }}
+          token: ${{ secrets.EXT_GITHUB }}
+          path: './lnbits-clink'
+
+      - name: Sync fork with upstream
+        run: |
+          cd lnbits-extensions
+          git remote add upstream https://github.com/lnbits/lnbits-extensions.git
+          git fetch upstream main
+          git checkout -b update-lnbits-clink-${{ github.ref_name }} upstream/main
+
+      - name: Update extensions.json
+        run: |
+          cd lnbits-extensions
+          python ../lnbits-clink/tools/update_extensions.py lnbits-clink ${{ github.ref_name }}
+
+      - name: Commit and push
+        run: |
+          cd lnbits-extensions
+          git config user.name "WoompaLoompa"
+          git config user.email "06bc1a977d@atomicmail.io"
+          git add -A
+          git commit -am "[UPDATE] lnbits-clink to ${{ github.ref_name }}"
+          git push origin update-lnbits-clink-${{ github.ref_name }}
+
+      - name: Open PR in extensions repo
+        env:
+          GH_TOKEN: ${{ secrets.EXT_GITHUB }}
+          repo_name: '${{ github.event.repository.name }}'
+          tag: '${{ github.ref_name }}'
+          branch: 'update-lnbits-clink-${{ github.ref_name }}'
+          title: '[UPDATE] lnbits-clink to ${{ github.ref_name }}'
+          body: 'https://github.com/WoompaLoompa/lnbits-clink/releases/${{ github.ref_name }}'
+        run: |
+          cd lnbits-extensions
+          gh config set pager cat
+          check=$(gh pr list -H $branch --repo lnbits/lnbits-extensions | wc -l)
+          test $check -ne 0 || gh pr create \
+            --repo lnbits/lnbits-extensions \
+            --head "WoompaLoompa:$branch" \
+            --base main \
+            --title "$title" \
+            --body "$body"
