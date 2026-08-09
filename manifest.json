@@ -1,0 +1,9 @@
+{
+  "repos": [
+    {
+      "id": "clink",
+      "organisation": "WoompaLoompa",
+      "repository": "lnbits-clink"
+    }
+  ]
+}
