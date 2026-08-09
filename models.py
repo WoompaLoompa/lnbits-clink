@@ -26,6 +26,10 @@ class CreateOffer(BaseModel):
     relay: str | None = None
 
 
+class UpdateOffer(BaseModel):
+    active: bool
+
+
 class Plan(BaseModel):
     id: str = Field(default_factory=lambda: urlsafe_short_hash())
     wallet: str
@@ -88,6 +92,34 @@ class CreateDebit(BaseModel):
     frequency_unit: str | None = None
     budget_msat: int | None = None
     rules: str | None = None
+    state: str = "active"
+
+
+class UpdateDebit(BaseModel):
+    state: str
+
+
+class NodeKey(BaseModel):
+    wallet: str
+    pubkey: str
+    privkey: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class DebitUsage(BaseModel):
+    debit_id: str
+    period_start: str
+    spent_msat: int = 0
+
+
+class K1(BaseModel):
+    debit_id: str
+    k1: str
+    used_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class CheckoutRequest(BaseModel):
+    amount_sats: int | None = None
 
 
 class Relay(BaseModel):
@@ -100,3 +132,7 @@ class Relay(BaseModel):
 class CreateRelay(BaseModel):
     url: str
     enabled: bool = True
+
+
+class UpdateRelay(BaseModel):
+    enabled: bool

@@ -1,8 +1,10 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from lnbits.core.models import User
 from lnbits.decorators import check_user_exists
 from lnbits.helpers import template_renderer
+
+from .crud import get_offer
 
 clink_ext_generic = APIRouter(tags=["clink"])
 
@@ -16,4 +18,27 @@ async def index(
 ):
     return template_renderer(["clink/templates"]).TemplateResponse(
         request, "clink/index.html", {"user": user.json()}
+    )
+
+
+@clink_ext_generic.get(
+    "/checkout/{offer_id}",
+    name="clink.checkout",
+    description="Public CLINK offer checkout page",
+    response_class=HTMLResponse,
+)
+async def checkout(request: Request, offer_id: str):
+    offer = await get_offer(offer_id)
+    if not offer or not offer.active:
+        raise HTTPException(status_code=404, detail="Offer not found.")
+    return template_renderer(["clink/templates"]).TemplateResponse(
+        request,
+        "clink/checkout.html",
+        {
+            "offer_id": offer.id,
+            "name": offer.name or "CLINK offer",
+            "description": offer.description or "",
+            "amount_msat": offer.amount_msat,
+            "noffer": offer.noffer or "",
+        },
     )

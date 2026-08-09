@@ -69,3 +69,32 @@ async def m001_initial(db):
             created_at TIMESTAMP NOT NULL DEFAULT {db.timestamp_now}
         );
         """)
+
+
+async def m002_node_keys(db):
+    await db.execute(f"""
+        CREATE TABLE clink.node_keys (
+            wallet TEXT PRIMARY KEY,
+            pubkey TEXT NOT NULL,
+            privkey TEXT NOT NULL,
+            created_at TIMESTAMP NOT NULL DEFAULT {db.timestamp_now}
+        );
+        """)
+
+    await db.execute("""
+        CREATE TABLE clink.debit_usage (
+            debit_id TEXT NOT NULL,
+            period_start TEXT NOT NULL,
+            spent_msat INTEGER NOT NULL DEFAULT 0,
+            PRIMARY KEY (debit_id, period_start)
+        );
+        """)
+
+    await db.execute(f"""
+        CREATE TABLE clink.k1s (
+            debit_id TEXT NOT NULL,
+            k1 TEXT NOT NULL,
+            used_at TIMESTAMP NOT NULL DEFAULT {db.timestamp_now},
+            PRIMARY KEY (debit_id, k1)
+        );
+        """)

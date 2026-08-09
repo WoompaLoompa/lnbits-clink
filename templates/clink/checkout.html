@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block scripts %}
+<script src="{{ static_url_for('clink/static', path='js/checkout.js') }}"></script>
+{% endblock %}
+{% block page %}
+<q-card flat class="q-ma-md" style="max-width: 520px; margin-left: auto; margin-right: auto">
+  <q-card-section>
+    <div class="row items-center q-gutter-md">
+      <img
+        src="{{ static_url_for('clink/static', path='clink.png') }}"
+        style="height: 28px"
+      />
+      <div class="text-h5">CLINK</div>
+    </div>
+  </q-card-section>
+  <q-separator />
+  <q-card-section>
+    <div class="text-h6">{{ name }}</div>
+    <div class="text-grey q-mt-xs">{{ description }}</div>
+    <div class="text-subtitle2 text-grey q-mt-sm">
+      {% if amount_msat %}Fixed price: {{ amount_msat // 1000 }} sats{% else %}Pay
+      what you want{% endif %}
+    </div>
+    {% if not amount_msat %}
+    <q-input
+      v-model.number="amount"
+      label="Amount (sats)"
+      type="number"
+      outlined
+      dense
+      class="q-mt-sm"
+    />
+    {% endif %}
+    <q-btn
+      class="q-mt-md"
+      color="primary"
+      label="Create invoice"
+      icon="bolt"
+      @click="createInvoice"
+      :loading="loading"
+    />
+  </q-card-section>
+  <q-card-section v-if="bolt11">
+    <q-separator class="q-mb-md" />
+    <div class="row items-center q-gutter-sm">
+      <qrcode-vue :value="bolt11" :size="200" level="M" />
+      <div style="min-width: 0">
+        <div class="text-subtitle2 text-grey q-mb-sm">BOLT11 invoice</div>
+        <q-btn
+          color="primary"
+          icon="content_copy"
+          label="Copy"
+          @click="copy(bolt11)"
+        />
+      </div>
+    </div>
+    <q-input
+      readonly
+      :model-value="bolt11"
+      dense
+      outlined
+      class="q-mt-sm"
+      style="word-break: break-all"
+    />
+    <div class="text-caption text-grey q-mt-sm" style="word-break: break-all">
+      {{ noffer }}
+    </div>
+  </q-card-section>
+</q-card>
+{% endblock %}
