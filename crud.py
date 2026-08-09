@@ -91,6 +91,15 @@ async def get_subscriptions(wallet_id: str) -> list[Subscription]:
     )
 
 
+async def get_active_subscriptions() -> list[Subscription]:
+    return await db.fetchall(
+        "SELECT * FROM clink.subscriptions WHERE state = 'active' "
+        "ORDER BY created_at DESC",
+        None,
+        Subscription,
+    )
+
+
 async def update_subscription(data: Subscription) -> Subscription | None:
     await db.update("clink.subscriptions", data)
     return await get_subscription(data.id)

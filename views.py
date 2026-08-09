@@ -36,6 +36,20 @@ async def pay_page(
 
 
 @clink_ext_generic.get(
+    "/subscriptions",
+    description="CLINK plans and subscriptions",
+    response_class=HTMLResponse,
+)
+async def subscriptions_page(
+    request: Request,
+    user: User = Depends(check_user_exists),
+):
+    return template_renderer(["clink/templates"]).TemplateResponse(
+        request, "clink/subscriptions.html", {"user": user.json()}
+    )
+
+
+@clink_ext_generic.get(
     "/checkout/{offer_id}",
     name="clink.checkout",
     description="Public CLINK offer checkout page",

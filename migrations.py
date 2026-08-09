@@ -98,3 +98,11 @@ async def m002_node_keys(db):
             PRIMARY KEY (debit_id, k1)
         );
         """)
+
+
+async def m003_subscription_fields(db):
+    await db.execute("ALTER TABLE clink.subscriptions ADD COLUMN ndebit TEXT")
+    await db.execute(
+        "ALTER TABLE clink.subscriptions ADD COLUMN last_paid_at TIMESTAMP"
+    )
+    await db.execute("ALTER TABLE clink.subscriptions ADD COLUMN last_error TEXT")

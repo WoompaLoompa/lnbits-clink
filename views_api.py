@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from http import HTTPStatus
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -9,38 +10,55 @@ from lnbits.helpers import urlsafe_short_hash
 from .crud import (
     create_debit,
     create_offer,
+    create_plan,
     create_relay,
+    create_subscription,
     delete_debit,
     delete_offer,
+    delete_plan,
     delete_relay,
+    delete_subscription,
     get_debit,
     get_debits,
     get_enabled_relays,
     get_offer,
     get_offers,
     get_or_create_node_key,
+    get_plan,
+    get_plans,
     get_relays,
+    get_subscription,
+    get_subscriptions,
     update_debit,
     update_offer,
+    update_plan,
+    update_subscription,
 )
 from .models import (
     CheckoutRequest,
     CreateDebit,
     CreateOffer,
+    CreatePlan,
     CreateRelay,
+    CreateSubscription,
     Debit,
     Offer,
     ParseNofferRequest,
     PayRequest,
+    Plan,
     Relay,
+    Subscription,
     UpdateDebit,
     UpdateOffer,
+    UpdatePlan,
     UpdateRelay,
+    UpdateSubscription,
 )
 from .node import resolve_offer_amount
 from .nostr import (
     NDebit,
     NOffer,
+    decode_ndebit,
     decode_noffer,
     encode_ndebit,
     encode_noffer,
@@ -49,6 +67,7 @@ from .nostr import (
 )
 from .nostr.bech32 import PRICE_TYPE_FIXED, PRICE_TYPE_SPONTANEOUS
 from .pay import PayOfferError, pay_offer
+from .subscriptions import add_frequency, renew_subscription
 
 clink_ext_api = APIRouter()
 
@@ -262,6 +281,189 @@ async def api_debit_delete(debit_id: str, user: User = Depends(check_user_exists
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="Debit not found.")
     _wallet_owned(debit.wallet, user)
     await delete_debit(debit_id)
+
+
+# ---------------------------------------------------------------------------
+# Plans
+# ---------------------------------------------------------------------------
+
+
+@clink_ext_api.get("/api/v1/plans", description="List plans for a wallet")
+async def api_plans(wallet: str = Query(...), user: User = Depends(check_user_exists)):
+    _wallet_owned(wallet, user)
+    return [p.dict() for p in await get_plans(wallet)]
+
+
+@clink_ext_api.post("/api/v1/plans", description="Create a recurring plan")
+async def api_plan_create(data: CreatePlan, user: User = Depends(check_user_exists)):
+    _wallet_owned(data.wallet, user)
+    if (data.amount_msat or 0) <= 0:
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST, detail="Amount must be positive."
+        )
+    if data.frequency_unit not in ("day", "week", "month"):
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail="Frequency unit must be day, week or month.",
+        )
+    if data.frequency_number < 1:
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST, detail="Frequency must be at least 1."
+        )
+    plan = Plan(
+        wallet=data.wallet,
+        name=data.name,
+        amount_msat=data.amount_msat,
+        frequency_number=data.frequency_number,
+        frequency_unit=data.frequency_unit,
+        description=data.description,
+    )
+    await create_plan(plan)
+    return plan.dict()
+
+
+@clink_ext_api.put("/api/v1/plans/{plan_id}", description="Update a plan")
+async def api_plan_update(
+    plan_id: str, data: UpdatePlan, user: User = Depends(check_user_exists)
+):
+    plan = await get_plan(plan_id)
+    if not plan:
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="Plan not found.")
+    _wallet_owned(plan.wallet, user)
+    plan.active = data.active
+    plan = await update_plan(plan)
+    return plan.dict()
+
+
+@clink_ext_api.delete("/api/v1/plans/{plan_id}", description="Delete a plan")
+async def api_plan_delete(plan_id: str, user: User = Depends(check_user_exists)):
+    plan = await get_plan(plan_id)
+    if not plan:
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="Plan not found.")
+    _wallet_owned(plan.wallet, user)
+    await delete_plan(plan_id)
+
+
+# ---------------------------------------------------------------------------
+# Subscriptions
+# ---------------------------------------------------------------------------
+
+
+@clink_ext_api.get(
+    "/api/v1/subscriptions", description="List subscriptions for a wallet"
+)
+async def api_subscriptions(
+    wallet: str = Query(...), user: User = Depends(check_user_exists)
+):
+    _wallet_owned(wallet, user)
+    subs = await get_subscriptions(wallet)
+    plans = {p.id: p for p in await get_plans(wallet)}
+    return [
+        {
+            **s.dict(),
+            "plan_name": plans[s.plan_id].name if s.plan_id in plans else None,
+        }
+        for s in subs
+    ]
+
+
+@clink_ext_api.post("/api/v1/subscriptions", description="Create a subscription")
+async def api_subscription_create(
+    data: CreateSubscription, user: User = Depends(check_user_exists)
+):
+    _wallet_owned(data.wallet, user)
+    plan = await get_plan(data.plan_id)
+    if not plan:
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="Plan not found.")
+    if plan.wallet != data.wallet:
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail="Plan does not belong to this wallet.",
+        )
+    try:
+        decode_ndebit(data.ndebit)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST, detail=str(exc)
+        ) from exc
+    now = datetime.now(timezone.utc)
+    sub = Subscription(
+        wallet=data.wallet,
+        plan_id=data.plan_id,
+        ndebit=data.ndebit,
+        payer_npub=data.payer_npub,
+        state="active",
+        current_period_start=now,
+        current_period_end=add_frequency(
+            now, plan.frequency_number, plan.frequency_unit
+        ),
+    )
+    await create_subscription(sub)
+    return sub.dict()
+
+
+@clink_ext_api.put(
+    "/api/v1/subscriptions/{subscription_id}", description="Update a subscription"
+)
+async def api_subscription_update(
+    subscription_id: str,
+    data: UpdateSubscription,
+    user: User = Depends(check_user_exists),
+):
+    sub = await get_subscription(subscription_id)
+    if not sub:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail="Subscription not found."
+        )
+    _wallet_owned(sub.wallet, user)
+    if data.state not in ("active", "paused", "cancelled"):
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail="State must be active, paused or cancelled.",
+        )
+    sub.state = data.state
+    if data.state == "active":
+        sub.attempts = 0
+        sub.last_error = None
+    sub.updated_at = datetime.now(timezone.utc)
+    sub = await update_subscription(sub)
+    return sub.dict()
+
+
+@clink_ext_api.delete(
+    "/api/v1/subscriptions/{subscription_id}", description="Delete a subscription"
+)
+async def api_subscription_delete(
+    subscription_id: str, user: User = Depends(check_user_exists)
+):
+    sub = await get_subscription(subscription_id)
+    if not sub:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail="Subscription not found."
+        )
+    _wallet_owned(sub.wallet, user)
+    await delete_subscription(subscription_id)
+
+
+@clink_ext_api.post(
+    "/api/v1/subscriptions/{subscription_id}/renew",
+    description="Bill the current period of a subscription now",
+)
+async def api_subscription_renew(
+    subscription_id: str, user: User = Depends(check_user_exists)
+):
+    sub = await get_subscription(subscription_id)
+    if not sub:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail="Subscription not found."
+        )
+    _wallet_owned(sub.wallet, user)
+    if sub.state != "active":
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST, detail="Subscription is not active."
+        )
+    sub = await renew_subscription(sub)
+    return sub.dict()
 
 
 # ---------------------------------------------------------------------------

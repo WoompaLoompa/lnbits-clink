@@ -55,11 +55,14 @@ class Subscription(BaseModel):
     id: str = Field(default_factory=lambda: urlsafe_short_hash())
     wallet: str
     plan_id: str
+    ndebit: str | None = None
     payer_npub: str | None = None
     state: str = "active"
     current_period_start: datetime | None = None
     current_period_end: datetime | None = None
     attempts: int = 0
+    last_paid_at: datetime | None = None
+    last_error: str | None = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -67,7 +70,16 @@ class Subscription(BaseModel):
 class CreateSubscription(BaseModel):
     wallet: str
     plan_id: str
+    ndebit: str
     payer_npub: str | None = None
+
+
+class UpdatePlan(BaseModel):
+    active: bool
+
+
+class UpdateSubscription(BaseModel):
+    state: str
 
 
 class Debit(BaseModel):

@@ -29,8 +29,8 @@ def _service_keypair():
 
 
 def _service_pubkey():
-    priv, _ = _service_keypair()
-    return priv
+    _, pub = _service_keypair()
+    return pub
 
 
 def _noffer(service_pubkey, price_type=PRICE_TYPE_SPONTANEOUS, price=None):

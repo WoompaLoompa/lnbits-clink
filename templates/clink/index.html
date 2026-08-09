@@ -12,6 +12,15 @@
       <div class="text-h5">CLINK</div>
       <small class="text-grey">Nostr-native Lightning</small>
       <q-space />
+      <q-btn
+        flat
+        dense
+        color="primary"
+        label="Subscriptions"
+        icon="event_repeat"
+        type="a"
+        href="/clink/subscriptions"
+      />
       <q-select
         v-if="wallets.length > 1"
         v-model="wallet"
