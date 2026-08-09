@@ -2,6 +2,8 @@
 
 > ### Bitcoin Lightning Payment Gateway, Subscriptions Auto-Renew & Funding Source for LNbits (via CLINK)
 
+![Lightning.pub as LNbits Funding Source via CLINK extesion](https://github.com/WoompaLoompa/lnbits-clink/blob/main/static/clink-lnbits-funding-source.png?raw=true)
+
 Nostr-native Lightning payments for LNbits, built on
 [CLINK](https://github.com/shocknet/CLINK) — the Nostr-native Lightning standard
 using offers (`noffer1...`) and wallet debits (`ndebit1...`) to enable BOLT11 payments, Subscriptions Auto-Renewal and [Lightning.pub](https://Lightning.pub) as Funding Source.
