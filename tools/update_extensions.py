@@ -56,7 +56,11 @@ if not latest_extension or not latest_index:
     raw_url = f"https://raw.githubusercontent.com/{owner}/{repo_name}/main"
     icon = config.get("tile", None)
     if icon:
-        icon = raw_url + icon.replace(f"/{repo_name}", "", 1)
+        # mirrors LNbits `icon_to_github_url`: the tile is the LNbits route
+        # path (e.g. /<ext_id>/static/icon.png), strip the first two segments
+        # to get the repo-relative path.
+        _, _, *tail = icon.split("/")
+        icon = f"{raw_url}/{'/'.join(tail)}"
     else:
         icon = raw_url + "/static/image/icon.png"
     new_ext = {
