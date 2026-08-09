@@ -6,6 +6,10 @@ Nostr-native Lightning payments for LNbits, built on
 [CLINK](https://github.com/shocknet/CLINK) — the Nostr-native Lightning standard
 using offers (`noffer1...`) and wallet debits (`ndebit1...`) to enable BOLT11 payments, Subscriptions Auto-Renewal and [Lightning.pub](https://Lightning.pub) as Funding Source.
 
+Announcement https://stacker.news/items/1543884/r/06bc1a977d
+
+Demo: https://clink-lnbits.fly.dev
+
 ## Features (v0.1.0 - coming)
 
 - **Offers** — publish a `noffer1...` and receive Lightning payments over Nostr
