@@ -481,7 +481,6 @@ async def handle_direct_payment(
             max_sat=(amount_msat // 1000) + 1,
             description=payload.get("description") or "",
             extra={"clink": {"debit_id": debit.id}},
-            extension="clink",
         )
     except Exception as exc:
         logger.warning(f"clink: debit payment failed for {debit.id}: {exc}")

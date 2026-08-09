@@ -1,0 +1,100 @@
+{% extends "base.html" %} {% from "macros.jinja" import window_vars with context
+%} {% block scripts %} {{ window_vars(user) }}
+<script src="{{ static_url_for('clink/static', path='js/pay.js') }}"></script>
+{% endblock %} {% block page %}
+<q-card flat class="q-ma-md" style="max-width: 620px; margin-left: auto; margin-right: auto">
+  <q-card-section>
+    <div class="row items-center q-gutter-md">
+      <img
+        src="{{ static_url_for('clink/static', path='clink.png') }}"
+        style="height: 28px"
+      />
+      <div class="text-h5">CLINK</div>
+      <small class="text-grey">Pay an offer</small>
+      <q-space />
+      <q-select
+        v-if="wallets.length > 1"
+        v-model="wallet"
+        :options="wallets"
+        option-label="name"
+        label="Wallet"
+        dense
+        outlined
+        style="min-width: 200px"
+      />
+    </div>
+  </q-card-section>
+  <q-separator />
+  <q-card-section>
+    <q-input
+      v-model.trim="noffer"
+      label="noffer1..."
+      outlined
+      dense
+      autofocus
+      @keyup.enter="parseNoffer"
+    />
+    <q-input
+      v-model.number="amount"
+      label="Amount (sats)"
+      type="number"
+      outlined
+      dense
+      class="q-mt-sm"
+    />
+    <div class="row q-mt-md q-gutter-sm">
+      <q-btn
+        color="primary"
+        label="Parse"
+        icon="qr_code"
+        :loading="parsing"
+        :disable="!noffer"
+        @click="parseNoffer"
+      />
+      <q-btn
+        color="positive"
+        label="Pay"
+        icon="bolt"
+        :loading="loading"
+        :disable="!noffer || !wallet"
+        @click="pay"
+      />
+    </div>
+  </q-card-section>
+
+  <q-card-section v-if="info">
+    <q-separator class="q-mb-md" />
+    <div class="text-subtitle2 text-grey q-mb-sm">Decoded offer</div>
+    <div class="text-caption" style="word-break: break-all">
+      offer: <span v-text="info.offer"></span><br />
+      relay: <span v-text="info.relay"></span><br />
+      pubkey: <span v-text="info.pubkey"></span><br />
+      price type:
+      <span v-text="['fixed', 'variable', 'spontaneous'][info.price_type] || info.price_type"></span>
+      <template v-if="info.price != null">,
+        price: <span v-text="sats(info.price)"></span>
+      </template>
+    </div>
+  </q-card-section>
+
+  <q-card-section v-if="error">
+    <q-separator class="q-mb-md" />
+    <q-banner dense rounded class="text-negative q-mb-sm">
+      <span v-text="error"></span>
+    </q-banner>
+  </q-card-section>
+
+  <q-card-section v-if="result">
+    <q-separator class="q-mb-md" />
+    <div class="text-subtitle2 text-grey q-mb-sm">Payment sent</div>
+    <div class="text-caption" style="word-break: break-all">
+      payment hash: <span v-text="result.payment_hash"></span><br />
+      amount: <span v-text="sats(result.amount_sats)"></span><br />
+      <template v-if="result.preimage"
+        >preimage: <span v-text="result.preimage"></span><br
+      /></template>
+      bolt11: <span v-text="result.bolt11"></span>
+    </div>
+  </q-card-section>
+</q-card>
+{% endblock %}

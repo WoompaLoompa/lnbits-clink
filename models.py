@@ -122,6 +122,17 @@ class CheckoutRequest(BaseModel):
     amount_sats: int | None = None
 
 
+class PayRequest(BaseModel):
+    wallet: str
+    noffer: str
+    amount_sats: int | None = None
+    description: str | None = None
+
+
+class ParseNofferRequest(BaseModel):
+    noffer: str
+
+
 class Relay(BaseModel):
     id: str = Field(default_factory=lambda: urlsafe_short_hash())
     url: str

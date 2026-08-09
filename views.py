@@ -22,6 +22,20 @@ async def index(
 
 
 @clink_ext_generic.get(
+    "/pay",
+    description="Pay a CLINK offer",
+    response_class=HTMLResponse,
+)
+async def pay_page(
+    request: Request,
+    user: User = Depends(check_user_exists),
+):
+    return template_renderer(["clink/templates"]).TemplateResponse(
+        request, "clink/pay.html", {"user": user.json()}
+    )
+
+
+@clink_ext_generic.get(
     "/checkout/{offer_id}",
     name="clink.checkout",
     description="Public CLINK offer checkout page",

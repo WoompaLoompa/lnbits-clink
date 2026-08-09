@@ -30,6 +30,8 @@ from .models import (
     CreateRelay,
     Debit,
     Offer,
+    ParseNofferRequest,
+    PayRequest,
     Relay,
     UpdateDebit,
     UpdateOffer,
@@ -46,6 +48,7 @@ from .nostr import (
     pubkey_from_privkey,
 )
 from .nostr.bech32 import PRICE_TYPE_FIXED, PRICE_TYPE_SPONTANEOUS
+from .pay import PayOfferError, pay_offer
 
 clink_ext_api = APIRouter()
 
@@ -259,6 +262,51 @@ async def api_debit_delete(debit_id: str, user: User = Depends(check_user_exists
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="Debit not found.")
     _wallet_owned(debit.wallet, user)
     await delete_debit(debit_id)
+
+
+# ---------------------------------------------------------------------------
+# Pay (outgoing offers)
+# ---------------------------------------------------------------------------
+
+
+@clink_ext_api.post(
+    "/api/v1/pay/parse", description="Parse a noffer string without paying"
+)
+async def api_pay_parse(data: ParseNofferRequest):
+    try:
+        decoded = decode_noffer(data.noffer)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST, detail=str(exc)
+        ) from exc
+    return {
+        "pubkey": decoded.pubkey,
+        "relay": decoded.relay,
+        "offer": decoded.offer,
+        "price_type": decoded.price_type,
+        "price": decoded.price,
+    }
+
+
+@clink_ext_api.post("/api/v1/pay", description="Pay a CLINK offer")
+async def api_pay(data: PayRequest, user: User = Depends(check_user_exists)):
+    _wallet_owned(data.wallet, user)
+    try:
+        result = await pay_offer(
+            noffer=data.noffer,
+            wallet_id=data.wallet,
+            amount_sats=data.amount_sats,
+            description=data.description,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST, detail=str(exc)
+        ) from exc
+    except PayOfferError as exc:
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_GATEWAY, detail=exc.payload
+        ) from exc
+    return result
 
 
 # ---------------------------------------------------------------------------
