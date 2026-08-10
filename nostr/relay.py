@@ -3,6 +3,7 @@
 import asyncio
 import json
 import logging
+from collections.abc import Callable
 
 from websockets import connect as ws_connect
 
@@ -97,16 +98,20 @@ async def request_response(
     request: dict,
     response_filter: dict,
     timeout: float = 30.0,
+    match: Callable[[dict], bool] | None = None,
 ) -> dict:
     """Publish a CLINK request and wait for the response event.
 
     Subscriptions are opened on every relay *before* the request is
     published, so a fast response cannot be missed. The first event matching
-    ``response_filter`` is returned; otherwise :class:`asyncio.TimeoutError`.
+    ``response_filter`` (and ``match``, when given) is returned; otherwise
+    :class:`asyncio.TimeoutError`.
     """
     queue: asyncio.Queue[dict] = asyncio.Queue()
     tasks = [
-        asyncio.create_task(_relay_waiter(url, request, response_filter, queue))
+        asyncio.create_task(
+            _relay_waiter(url, request, response_filter, queue, match)
+        )
         for url in relays
     ]
     try:
@@ -118,7 +123,11 @@ async def request_response(
 
 
 async def _relay_waiter(
-    url: str, request: dict, response_filter: dict, queue: asyncio.Queue
+    url: str,
+    request: dict,
+    response_filter: dict,
+    queue: asyncio.Queue,
+    match: Callable[[dict], bool] | None = None,
 ) -> None:
     sub_id = "clink-" + request["id"][:16]
     try:
@@ -129,7 +138,9 @@ async def _relay_waiter(
             while True:
                 msg = await _json_recv(ws)
                 if msg[0] == MESSAGE_EVENT and msg[1] == sub_id:
-                    queue.put_nowait(msg[2])
+                    event = msg[2]
+                    if match is None or match(event):
+                        queue.put_nowait(event)
                 elif msg[0] == MESSAGE_NOTICE:
                     logger.debug(f"notice from {url}: {msg[1]}")
     except Exception as exc:

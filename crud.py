@@ -1,6 +1,16 @@
 from lnbits.db import Database
 
-from .models import K1, Debit, DebitUsage, NodeKey, Offer, Plan, Relay, Subscription
+from .models import (
+    K1,
+    Debit,
+    DebitUsage,
+    Invoice,
+    NodeKey,
+    Offer,
+    Plan,
+    Relay,
+    Subscription,
+)
 
 db = Database("ext_clink")
 
@@ -240,3 +250,24 @@ async def update_relay(data: Relay) -> Relay | None:
 
 async def delete_relay(relay_id: str) -> None:
     await db.execute("DELETE FROM clink.relays WHERE id = :id", {"id": relay_id})
+
+
+async def save_invoice(data: Invoice) -> Invoice:
+    await db.insert("clink.invoices", data)
+    return data
+
+
+async def get_invoice_by_hash(payment_hash: str) -> Invoice | None:
+    return await db.fetchone(
+        "SELECT * FROM clink.invoices WHERE payment_hash = :payment_hash",
+        {"payment_hash": payment_hash},
+        Invoice,
+    )
+
+
+async def get_invoice_by_bolt11(bolt11: str) -> Invoice | None:
+    return await db.fetchone(
+        "SELECT * FROM clink.invoices WHERE bolt11 = :bolt11",
+        {"bolt11": bolt11},
+        Invoice,
+    )

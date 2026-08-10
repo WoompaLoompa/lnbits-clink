@@ -11,6 +11,7 @@ from .keys import private_key_from_hex
 CLINK_VERSION = "1"
 KIND_OFFER_REQUEST = 21001
 KIND_DEBIT_REQUEST = 21002
+KIND_USER_API = 21000
 
 CLINK_VERSION_TAG = ["clink_version", CLINK_VERSION]
 

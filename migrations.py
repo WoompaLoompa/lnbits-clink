@@ -106,3 +106,16 @@ async def m003_subscription_fields(db):
         "ALTER TABLE clink.subscriptions ADD COLUMN last_paid_at TIMESTAMP"
     )
     await db.execute("ALTER TABLE clink.subscriptions ADD COLUMN last_error TEXT")
+
+
+async def m004_clink_invoices(db):
+    await db.execute(f"""
+        CREATE TABLE clink.invoices (
+            payment_hash TEXT PRIMARY KEY,
+            bolt11 TEXT NOT NULL,
+            direction TEXT NOT NULL DEFAULT 'in',
+            amount_msat INTEGER,
+            operation_id TEXT,
+            created_at TIMESTAMP NOT NULL DEFAULT {db.timestamp_now}
+        );
+        """)

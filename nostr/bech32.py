@@ -17,10 +17,21 @@ from bech32 import bech32_decode, bech32_encode, convertbits
 
 NOFFER_HRP = "noffer"
 NDEBIT_HRP = "ndebit"
+NPROFILE_HRP = "nprofile"
 
 PRICE_TYPE_FIXED = 0
 PRICE_TYPE_VARIABLE = 1
 PRICE_TYPE_SPONTANEOUS = 2
+
+
+@dataclass
+class NProfile:
+    pubkey: str
+    relays: list[str] = field(default_factory=list)
+
+    @property
+    def relay(self) -> str | None:
+        return self.relays[0] if self.relays else None
 
 
 @dataclass
@@ -129,7 +140,26 @@ def generate_k1() -> str:
     return secrets.token_hex(32)
 
 
-def _bech32_decode(hrp: str, encoded: str) -> dict[int, bytes]:
+def encode_nprofile(profile: NProfile) -> str:
+    """Encode a NIP-19 ``nprofile1...`` string from pubkey + relays."""
+    pubkey = bytes.fromhex(profile.pubkey)
+    if len(pubkey) != 32:
+        raise ValueError("pubkey must be 32 bytes")
+    tlvs: list[tuple[int, bytes]] = [(0, pubkey)]
+    for relay in profile.relays:
+        tlvs.append((1, relay.encode("utf-8")))
+    return _bech32_encode(NPROFILE_HRP, tlvs)
+
+
+def _bech32_decode(
+    hrp: str, encoded: str, multi: set[int] | None = None
+) -> dict[int, bytes | list[bytes]]:
+    """Decode a bech32 ``hrp`` string into its TLVs.
+
+    ``multi`` lists TLV types that may appear more than once; those values are
+    returned as lists (NIP-19 ``nprofile`` allows several relay entries).
+    """
+    multi = multi or set()
     if not encoded.startswith(hrp + "1"):
         raise ValueError(f"not a {hrp} string")
     decoded_hrp, words = bech32_decode(encoded)
@@ -138,15 +168,18 @@ def _bech32_decode(hrp: str, encoded: str) -> dict[int, bytes]:
     data = convertbits(words, 5, 8, False)
     if data is None:
         raise ValueError(f"invalid {hrp} data")
-    tlvs: dict[int, bytes] = {}
+    tlvs: dict[int, bytes | list[bytes]] = {}
     pos = 0
     while pos < len(data):
         tlv_type = data[pos]
         tlv_len = data[pos + 1]
         value = bytes(data[pos + 2 : pos + 2 + tlv_len])
-        if tlv_type in tlvs:
+        if tlv_type in tlvs and tlv_type not in multi:
             raise ValueError(f"duplicate TLV type {tlv_type}")
-        tlvs[tlv_type] = value
+        if tlv_type in multi:
+            tlvs.setdefault(tlv_type, []).append(value)
+        else:
+            tlvs[tlv_type] = value
         pos += 2 + tlv_len
     return tlvs
 
@@ -172,6 +205,16 @@ def decode_noffer(encoded: str) -> NOffer:
         price_type=price_type,
         price=price,
     )
+
+
+def decode_nprofile(encoded: str) -> NProfile:
+    """Decode a NIP-19 ``nprofile1...`` string into an :class:`NProfile`."""
+    tlvs = _bech32_decode(NPROFILE_HRP, encoded, multi={1})
+    pubkey = tlvs.get(0)
+    if not pubkey or len(pubkey) != 32:
+        raise ValueError("nprofile missing pubkey")
+    relays = [relay.decode("utf-8") for relay in tlvs.get(1, [])]
+    return NProfile(pubkey=pubkey.hex(), relays=relays)
 
 
 def decode_ndebit(encoded: str) -> NDebit:

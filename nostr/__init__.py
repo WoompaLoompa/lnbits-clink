@@ -1,10 +1,13 @@
 from .bech32 import (
     NDebit,
     NOffer,
+    NProfile,
     decode_ndebit,
     decode_noffer,
+    decode_nprofile,
     encode_ndebit,
     encode_noffer,
+    encode_nprofile,
 )
 from .events import CLINK_VERSION, build_event, verify_event
 from .keys import generate_keypair, pubkey_from_privkey
@@ -21,14 +24,17 @@ __all__ = [
     "CLINK_VERSION",
     "NDebit",
     "NOffer",
+    "NProfile",
     "RelayClient",
     "build_event",
     "decode_ndebit",
     "decode_noffer",
+    "decode_nprofile",
     "decrypt",
     "decrypt_with_keys",
     "encode_ndebit",
     "encode_noffer",
+    "encode_nprofile",
     "encrypt",
     "encrypt_with_keys",
     "generate_keypair",

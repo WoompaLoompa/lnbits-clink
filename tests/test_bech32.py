@@ -2,10 +2,13 @@ import pytest
 from clink.nostr import (
     NDebit,
     NOffer,
+    NProfile,
     decode_ndebit,
     decode_noffer,
+    decode_nprofile,
     encode_ndebit,
     encode_noffer,
+    encode_nprofile,
 )
 from clink.nostr.bech32 import (
     PRICE_TYPE_FIXED,
@@ -95,6 +98,37 @@ def test_generate_k1_format():
     k1 = generate_k1()
     assert len(k1) == 64
     assert len(bytes.fromhex(k1)) == 32
+
+
+def test_nprofile_roundtrip():
+    profile = NProfile(pubkey=PUBKEY, relays=[RELAY])
+    encoded = encode_nprofile(profile)
+    assert encoded.startswith("nprofile1")
+    decoded = decode_nprofile(encoded)
+    assert decoded.pubkey == PUBKEY
+    assert decoded.relays == [RELAY]
+    assert decoded.relay == RELAY
+
+
+def test_nprofile_multiple_relays_and_token_order():
+    profile = NProfile(pubkey=PUBKEY, relays=["wss://relay.one", "wss://relay.two"])
+    encoded = encode_nprofile(profile)
+    decoded = decode_nprofile(encoded)
+    assert decoded.relays == ["wss://relay.one", "wss://relay.two"]
+
+
+def test_nprofile_decode_from_connection_string():
+    encoded = encode_nprofile(NProfile(pubkey=PUBKEY, relays=[RELAY]))
+    from clink.account import parse_account
+
+    profile, token = parse_account(encoded)
+    assert profile.pubkey == PUBKEY
+    assert profile.relay == RELAY
+    assert token is None
+
+    profile, token = parse_account(f"{encoded}:adminToken123")
+    assert profile.pubkey == PUBKEY
+    assert token == "adminToken123"
 
 
 def test_bad_noffer_raises():

@@ -159,3 +159,12 @@ class CreateRelay(BaseModel):
 
 class UpdateRelay(BaseModel):
     enabled: bool
+
+
+class Invoice(BaseModel):
+    payment_hash: str
+    bolt11: str
+    direction: str = "in"
+    amount_msat: int | None = None
+    operation_id: str | None = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
