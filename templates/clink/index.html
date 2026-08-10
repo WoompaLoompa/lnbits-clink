@@ -11,7 +11,7 @@
       />
       <div class="text-h5">CLINK</div>
       <small class="text-grey">Nostr-native Lightning</small>
-      <q-space />
+      <q-space ></q-space>
       <q-btn
         flat
         dense
@@ -20,7 +20,16 @@
         icon="event_repeat"
         type="a"
         href="/clink/subscriptions"
-      />
+      ></q-btn>
+      <q-btn
+        flat
+        dense
+        color="positive"
+        label="Pay"
+        icon="bolt"
+        type="a"
+        href="/clink/pay"
+      ></q-btn>
       <q-select
         v-if="wallets.length > 1"
         v-model="wallet"
@@ -30,22 +39,22 @@
         dense
         outlined
         style="min-width: 200px"
-      />
+      ></q-select>
     </div>
   </q-card-section>
   <q-tabs v-model="tab" dense class="text-grey" align="left">
-    <q-tab name="offers" label="Offers" icon="bolt" />
-    <q-tab name="debits" label="Debits" icon="account_balance_wallet" />
-    <q-tab name="relays" label="Relays" icon="dns" />
+    <q-tab name="offers" label="Offers" icon="bolt" ></q-tab>
+    <q-tab name="debits" label="Debits" icon="account_balance_wallet" ></q-tab>
+    <q-tab name="relays" label="Relays" icon="dns" ></q-tab>
   </q-tabs>
-  <q-separator />
+  <q-separator ></q-separator>
 </q-card>
 
 <q-page-container>
   <!-- Offers -->
   <q-tab-panel v-if="tab === 'offers'">
     <div class="row justify-end q-mb-sm">
-      <q-btn color="primary" label="New offer" icon="add" @click="openOfferDialog" />
+      <q-btn color="primary" label="New offer" icon="add" @click="openOfferDialog" ></q-btn>
     </div>
     <q-card v-if="offers.length === 0" flat class="text-grey q-pa-md">
       No offers yet. Create one to receive payments over Nostr.
@@ -53,7 +62,7 @@
     <q-list bordered separator>
       <q-item v-for="o in offers" :key="o.id">
         <q-item-section avatar>
-          <q-icon name="bolt" color="primary" />
+          <q-icon name="bolt" color="primary" ></q-icon>
         </q-item-section>
         <q-item-section>
           <q-item-label>
@@ -79,8 +88,8 @@
               color="primary"
               icon="qr_code"
               @click="showQr(o.noffer)"
-            />
-            <q-btn flat dense icon="content_copy" @click="copy(o.noffer)" />
+            ></q-btn>
+            <q-btn flat dense icon="content_copy" @click="copy(o.noffer)" ></q-btn>
             <q-btn
               flat
               dense
@@ -89,9 +98,9 @@
               type="a"
               :href="'/clink/checkout/' + o.id"
               target="_blank"
-            />
-            <q-toggle v-model="o.active" @update:model-value="toggleOffer(o)" />
-            <q-btn flat dense color="negative" icon="delete" @click="deleteOffer(o)" />
+            ></q-btn>
+            <q-toggle v-model="o.active" @update:model-value="toggleOffer(o)" ></q-toggle>
+            <q-btn flat dense color="negative" icon="delete" @click="deleteOffer(o)" ></q-btn>
           </div>
         </q-item-section>
       </q-item>
@@ -106,7 +115,7 @@
         label="New debit pointer"
         icon="add"
         @click="openDebitDialog"
-      />
+      ></q-btn>
     </div>
     <q-card v-if="debits.length === 0" flat class="text-grey q-pa-md">
       No debit pointers yet. Create one so apps can request payments from this
@@ -115,7 +124,7 @@
     <q-list bordered separator>
       <q-item v-for="d in debits" :key="d.id">
         <q-item-section avatar>
-          <q-icon name="account_balance_wallet" color="primary" />
+          <q-icon name="account_balance_wallet" color="primary" ></q-icon>
         </q-item-section>
         <q-item-section>
           <q-item-label>
@@ -143,13 +152,13 @@
               color="primary"
               icon="qr_code"
               @click="showQr(d.ndebit)"
-            />
-            <q-btn flat dense icon="content_copy" @click="copy(d.ndebit)" />
+            ></q-btn>
+            <q-btn flat dense icon="content_copy" @click="copy(d.ndebit)" ></q-btn>
             <q-toggle
               :model-value="d.state === 'active'"
               @update:model-value="toggleDebit(d)"
-            />
-            <q-btn flat dense color="negative" icon="delete" @click="deleteDebit(d)" />
+            ></q-toggle>
+            <q-btn flat dense color="negative" icon="delete" @click="deleteDebit(d)" ></q-btn>
           </div>
         </q-item-section>
       </q-item>
@@ -159,7 +168,7 @@
   <!-- Relays -->
   <q-tab-panel v-if="tab === 'relays'">
     <div class="row justify-end q-mb-sm">
-      <q-btn color="primary" label="Add relay" icon="add" @click="openRelayDialog" />
+      <q-btn color="primary" label="Add relay" icon="add" @click="openRelayDialog" ></q-btn>
     </div>
     <q-card v-if="relays.length === 0" flat class="text-grey q-pa-md">
       No relays configured. The CLINK listener needs at least one relay to
@@ -168,7 +177,7 @@
     <q-list bordered separator>
       <q-item v-for="r in relays" :key="r.id">
         <q-item-section avatar>
-          <q-icon name="dns" color="primary" />
+          <q-icon name="dns" color="primary" ></q-icon>
         </q-item-section>
         <q-item-section>
           <q-item-label><span v-text="r.url"></span></q-item-label>
@@ -179,8 +188,8 @@
         </q-item-section>
         <q-item-section side>
           <div class="row q-gutter-xs items-center">
-            <q-toggle v-model="r.enabled" @update:model-value="toggleRelay(r)" />
-            <q-btn flat dense color="negative" icon="delete" @click="deleteRelay(r)" />
+            <q-toggle v-model="r.enabled" @update:model-value="toggleRelay(r)" ></q-toggle>
+            <q-btn flat dense color="negative" icon="delete" @click="deleteRelay(r)" ></q-btn>
           </div>
         </q-item-section>
       </q-item>
@@ -195,7 +204,7 @@
       <div class="text-h6">New offer</div>
     </q-card-section>
     <q-card-section>
-      <q-input v-model="offerDialog.name" label="Name" outlined dense />
+      <q-input v-model="offerDialog.name" label="Name" outlined dense ></q-input>
       <q-input
         v-model.number="offerDialog.amount"
         label="Amount (sats) - leave empty for spontaneous"
@@ -203,25 +212,25 @@
         outlined
         dense
         class="q-mt-sm"
-      />
+      ></q-input>
       <q-input
         v-model="offerDialog.description"
         label="Description"
         outlined
         dense
         class="q-mt-sm"
-      />
+      ></q-input>
       <q-input
         v-model="offerDialog.relay"
         label="Relay (optional, defaults to first enabled)"
         outlined
         dense
         class="q-mt-sm"
-      />
+      ></q-input>
     </q-card-section>
     <q-card-actions align="right">
-      <q-btn flat label="Cancel" v-close-popup />
-      <q-btn color="primary" label="Create" @click="createOffer" :loading="offerDialog.loading" />
+      <q-btn flat label="Cancel" v-close-popup ></q-btn>
+      <q-btn color="primary" label="Create" @click="createOffer" :loading="offerDialog.loading" ></q-btn>
     </q-card-actions>
   </q-card>
 </q-dialog>
@@ -239,7 +248,7 @@
         type="number"
         outlined
         dense
-      />
+      ></q-input>
       <q-input
         v-model.number="debitDialog.budget"
         label="Budget (sats) per period - optional"
@@ -247,7 +256,7 @@
         outlined
         dense
         class="q-mt-sm"
-      />
+      ></q-input>
       <div class="row q-mt-sm q-gutter-sm">
         <q-input
           v-model.number="debitDialog.frequencyNumber"
@@ -256,7 +265,7 @@
           outlined
           dense
           style="width: 110px"
-        />
+        ></q-input>
         <q-select
           v-model="debitDialog.frequencyUnit"
           :options="['day', 'week', 'month']"
@@ -264,7 +273,7 @@
           outlined
           dense
           style="width: 140px"
-        />
+        ></q-select>
       </div>
       <q-input
         v-model="debitDialog.rules"
@@ -273,12 +282,12 @@
         dense
         class="q-mt-sm"
         type="textarea"
-      />
-      <q-toggle v-model="debitDialog.active" label="Auto-approve (active)" class="q-mt-sm" />
+      ></q-input>
+      <q-toggle v-model="debitDialog.active" label="Auto-approve (active)" class="q-mt-sm" ></q-toggle>
     </q-card-section>
     <q-card-actions align="right">
-      <q-btn flat label="Cancel" v-close-popup />
-      <q-btn color="primary" label="Create" @click="createDebit" :loading="debitDialog.loading" />
+      <q-btn flat label="Cancel" v-close-popup ></q-btn>
+      <q-btn color="primary" label="Create" @click="createDebit" :loading="debitDialog.loading" ></q-btn>
     </q-card-actions>
   </q-card>
 </q-dialog>
@@ -290,12 +299,12 @@
       <div class="text-h6">Add relay</div>
     </q-card-section>
     <q-card-section>
-      <q-input v-model="relayDialog.url" label="wss://..." outlined dense autofocus />
-      <q-toggle v-model="relayDialog.enabled" label="Enabled" class="q-mt-sm" />
+      <q-input v-model="relayDialog.url" label="wss://..." outlined dense autofocus ></q-input>
+      <q-toggle v-model="relayDialog.enabled" label="Enabled" class="q-mt-sm" ></q-toggle>
     </q-card-section>
     <q-card-actions align="right">
-      <q-btn flat label="Cancel" v-close-popup />
-      <q-btn color="primary" label="Add" @click="createRelay" :loading="relayDialog.loading" />
+      <q-btn flat label="Cancel" v-close-popup ></q-btn>
+      <q-btn color="primary" label="Add" @click="createRelay" :loading="relayDialog.loading" ></q-btn>
     </q-card-actions>
   </q-card>
 </q-dialog>
@@ -304,10 +313,10 @@
 <q-dialog v-model="qrDialog.show">
   <q-card>
     <q-card-section class="row items-center q-gutter-sm">
-      <qrcode-vue :value="qrDialog.value" :size="220" level="M" />
+      <qrcode-vue :value="qrDialog.value" :size="220" level="M" ></qrcode-vue>
       <div>
         <div class="text-subtitle2 text-grey q-mb-sm">Scan or copy</div>
-        <q-btn color="primary" icon="content_copy" label="Copy" @click="copy(qrDialog.value)" />
+        <q-btn color="primary" icon="content_copy" label="Copy" @click="copy(qrDialog.value)" ></q-btn>
       </div>
     </q-card-section>
   </q-card>

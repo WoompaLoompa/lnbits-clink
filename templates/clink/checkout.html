@@ -13,7 +13,7 @@
       <div class="text-h5">CLINK</div>
     </div>
   </q-card-section>
-  <q-separator />
+  <q-separator ></q-separator>
   <q-card-section>
     <div class="text-h6">{{ name }}</div>
     <div class="text-grey q-mt-xs">{{ description }}</div>
@@ -29,7 +29,7 @@
       outlined
       dense
       class="q-mt-sm"
-    />
+    ></q-input>
     {% endif %}
     <q-btn
       class="q-mt-md"
@@ -38,12 +38,12 @@
       icon="bolt"
       @click="createInvoice"
       :loading="loading"
-    />
+    ></q-btn>
   </q-card-section>
   <q-card-section v-if="bolt11">
-    <q-separator class="q-mb-md" />
+    <q-separator class="q-mb-md" ></q-separator>
     <div class="row items-center q-gutter-sm">
-      <qrcode-vue :value="bolt11" :size="200" level="M" />
+      <qrcode-vue :value="bolt11" :size="200" level="M" ></qrcode-vue>
       <div style="min-width: 0">
         <div class="text-subtitle2 text-grey q-mb-sm">BOLT11 invoice</div>
         <q-btn
@@ -51,7 +51,7 @@
           icon="content_copy"
           label="Copy"
           @click="copy(bolt11)"
-        />
+        ></q-btn>
       </div>
     </div>
     <q-input
@@ -61,7 +61,7 @@
       outlined
       class="q-mt-sm"
       style="word-break: break-all"
-    />
+    ></q-input>
     <div class="text-caption text-grey q-mt-sm" style="word-break: break-all">
       {{ noffer }}
     </div>

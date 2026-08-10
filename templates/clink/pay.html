@@ -11,7 +11,16 @@
       />
       <div class="text-h5">CLINK</div>
       <small class="text-grey">Pay an offer</small>
-      <q-space />
+      <q-space ></q-space>
+      <q-btn
+        flat
+        dense
+        color="primary"
+        label="Back"
+        icon="arrow_back"
+        type="a"
+        href="/clink"
+      ></q-btn>
       <q-select
         v-if="wallets.length > 1"
         v-model="wallet"
@@ -21,10 +30,10 @@
         dense
         outlined
         style="min-width: 200px"
-      />
+      ></q-select>
     </div>
   </q-card-section>
-  <q-separator />
+  <q-separator ></q-separator>
   <q-card-section>
     <q-input
       v-model.trim="noffer"
@@ -33,7 +42,7 @@
       dense
       autofocus
       @keyup.enter="parseNoffer"
-    />
+    ></q-input>
     <q-input
       v-model.number="amount"
       label="Amount (sats)"
@@ -41,7 +50,7 @@
       outlined
       dense
       class="q-mt-sm"
-    />
+    ></q-input>
     <div class="row q-mt-md q-gutter-sm">
       <q-btn
         color="primary"
@@ -50,7 +59,7 @@
         :loading="parsing"
         :disable="!noffer"
         @click="parseNoffer"
-      />
+      ></q-btn>
       <q-btn
         color="positive"
         label="Pay"
@@ -58,12 +67,12 @@
         :loading="loading"
         :disable="!noffer || !wallet"
         @click="pay"
-      />
+      ></q-btn>
     </div>
   </q-card-section>
 
   <q-card-section v-if="info">
-    <q-separator class="q-mb-md" />
+    <q-separator class="q-mb-md" ></q-separator>
     <div class="text-subtitle2 text-grey q-mb-sm">Decoded offer</div>
     <div class="text-caption" style="word-break: break-all">
       offer: <span v-text="info.offer"></span><br />
@@ -78,14 +87,14 @@
   </q-card-section>
 
   <q-card-section v-if="error">
-    <q-separator class="q-mb-md" />
+    <q-separator class="q-mb-md" ></q-separator>
     <q-banner dense rounded class="text-negative q-mb-sm">
       <span v-text="error"></span>
     </q-banner>
   </q-card-section>
 
   <q-card-section v-if="result">
-    <q-separator class="q-mb-md" />
+    <q-separator class="q-mb-md" ></q-separator>
     <div class="text-subtitle2 text-grey q-mb-sm">Payment sent</div>
     <div class="text-caption" style="word-break: break-all">
       payment hash: <span v-text="result.payment_hash"></span><br />

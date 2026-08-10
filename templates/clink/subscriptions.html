@@ -11,7 +11,7 @@
       />
       <div class="text-h5">CLINK</div>
       <small class="text-grey">Plans &amp; subscriptions</small>
-      <q-space />
+      <q-space ></q-space>
       <q-btn
         flat
         dense
@@ -20,7 +20,7 @@
         icon="arrow_back"
         type="a"
         href="/clink"
-      />
+      ></q-btn>
       <q-select
         v-if="wallets.length > 1"
         v-model="wallet"
@@ -30,21 +30,21 @@
         dense
         outlined
         style="min-width: 200px"
-      />
+      ></q-select>
     </div>
   </q-card-section>
   <q-tabs v-model="tab" dense class="text-grey" align="left">
-    <q-tab name="plans" label="Plans" icon="event_repeat" />
-    <q-tab name="subscriptions" label="Subscriptions" icon="pending_actions" />
+    <q-tab name="plans" label="Plans" icon="event_repeat" ></q-tab>
+    <q-tab name="subscriptions" label="Subscriptions" icon="pending_actions" ></q-tab>
   </q-tabs>
-  <q-separator />
+  <q-separator ></q-separator>
 </q-card>
 
 <q-page-container>
   <!-- Plans -->
   <q-tab-panel v-if="tab === 'plans'">
     <div class="row justify-end q-mb-sm">
-      <q-btn color="primary" label="New plan" icon="add" @click="openPlanDialog" />
+      <q-btn color="primary" label="New plan" icon="add" @click="openPlanDialog" ></q-btn>
     </div>
     <q-card v-if="plans.length === 0" flat class="text-grey q-pa-md">
       No plans yet. Create one to charge a recurring amount, then attach a
@@ -53,7 +53,7 @@
     <q-list bordered separator>
       <q-item v-for="p in plans" :key="p.id">
         <q-item-section avatar>
-          <q-icon name="event_repeat" color="primary" />
+          <q-icon name="event_repeat" color="primary" ></q-icon>
         </q-item-section>
         <q-item-section>
           <q-item-label>
@@ -77,8 +77,8 @@
         </q-item-section>
         <q-item-section side>
           <div class="row q-gutter-xs items-center">
-            <q-toggle v-model="p.active" @update:model-value="togglePlan(p)" />
-            <q-btn flat dense color="negative" icon="delete" @click="deletePlan(p)" />
+            <q-toggle v-model="p.active" @update:model-value="togglePlan(p)" ></q-toggle>
+            <q-btn flat dense color="negative" icon="delete" @click="deletePlan(p)" ></q-btn>
           </div>
         </q-item-section>
       </q-item>
@@ -94,7 +94,7 @@
         icon="add"
         :disable="plans.length === 0"
         @click="openSubDialog"
-      />
+      ></q-btn>
     </div>
     <q-card v-if="subscriptions.length === 0" flat class="text-grey q-pa-md">
       No subscriptions yet. Link a plan to a payer's ndebit pointer to charge
@@ -103,7 +103,7 @@
     <q-list bordered separator>
       <q-item v-for="s in subscriptions" :key="s.id">
         <q-item-section avatar>
-          <q-icon name="pending_actions" color="primary" />
+          <q-icon name="pending_actions" color="primary" ></q-icon>
         </q-item-section>
         <q-item-section>
           <q-item-label>
@@ -138,7 +138,7 @@
               title="Bill now"
               :loading="s.loading"
               @click="renewNow(s)"
-            />
+            ></q-btn>
             <q-btn
               v-if="s.state !== 'cancelled'"
               flat
@@ -146,7 +146,7 @@
               :color="s.state === 'active' ? 'warning' : 'teal'"
               :icon="s.state === 'active' ? 'pause' : 'play_arrow'"
               @click="toggleSubscription(s)"
-            />
+            ></q-btn>
             <q-btn
               v-if="s.state !== 'cancelled'"
               flat
@@ -154,8 +154,8 @@
               color="negative"
               icon="cancel"
               @click="cancelSubscription(s)"
-            />
-            <q-btn flat dense color="grey" icon="delete" @click="deleteSubscription(s)" />
+            ></q-btn>
+            <q-btn flat dense color="grey" icon="delete" @click="deleteSubscription(s)" ></q-btn>
           </div>
         </q-item-section>
       </q-item>
@@ -170,7 +170,7 @@
       <div class="text-h6">New plan</div>
     </q-card-section>
     <q-card-section>
-      <q-input v-model="planDialog.name" label="Name" outlined dense autofocus />
+      <q-input v-model="planDialog.name" label="Name" outlined dense autofocus ></q-input>
       <q-input
         v-model.number="planDialog.amount"
         label="Amount (sats) per period"
@@ -178,7 +178,7 @@
         outlined
         dense
         class="q-mt-sm"
-      />
+      ></q-input>
       <div class="row q-mt-sm q-gutter-sm">
         <q-input
           v-model.number="planDialog.frequencyNumber"
@@ -187,7 +187,7 @@
           outlined
           dense
           style="width: 110px"
-        />
+        ></q-input>
         <q-select
           v-model="planDialog.frequencyUnit"
           :options="['day', 'week', 'month']"
@@ -195,7 +195,7 @@
           outlined
           dense
           style="width: 140px"
-        />
+        ></q-select>
       </div>
       <q-input
         v-model="planDialog.description"
@@ -203,11 +203,11 @@
         outlined
         dense
         class="q-mt-sm"
-      />
+      ></q-input>
     </q-card-section>
     <q-card-actions align="right">
-      <q-btn flat label="Cancel" v-close-popup />
-      <q-btn color="primary" label="Create" @click="createPlan" :loading="planDialog.loading" />
+      <q-btn flat label="Cancel" v-close-popup ></q-btn>
+      <q-btn color="primary" label="Create" @click="createPlan" :loading="planDialog.loading" ></q-btn>
     </q-card-actions>
   </q-card>
 </q-dialog>
@@ -227,30 +227,30 @@
         label="Plan"
         outlined
         dense
-      />
+      ></q-select>
       <q-input
         v-model.trim="subDialog.ndebit"
         label="Payer ndebit1..."
         outlined
         dense
         class="q-mt-sm"
-      />
+      ></q-input>
       <q-input
         v-model.trim="subDialog.payerNpub"
         label="Payer npub (optional label)"
         outlined
         dense
         class="q-mt-sm"
-      />
+      ></q-input>
     </q-card-section>
     <q-card-actions align="right">
-      <q-btn flat label="Cancel" v-close-popup />
+      <q-btn flat label="Cancel" v-close-popup ></q-btn>
       <q-btn
         color="primary"
         label="Create"
         @click="createSubscription"
         :loading="subDialog.loading"
-      />
+      ></q-btn>
     </q-card-actions>
   </q-card>
 </q-dialog>
