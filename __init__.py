@@ -2,6 +2,7 @@ import asyncio
 from collections.abc import Callable, Coroutine
 
 from fastapi import APIRouter
+from loguru import logger
 
 try:
     from lnbits.task_manager import task_manager as _task_manager
@@ -17,6 +18,16 @@ from .node import LISTENER_TASK_NAME, clink_listener
 from .subscriptions import SUBSCRIPTIONS_TASK_NAME, clink_subscriptions
 from .views import clink_ext_generic
 from .views_api import clink_ext_api
+from .wallet import ClinkWallet
+
+try:
+    import lnbits.wallets as _lnbits_wallets
+
+    if not hasattr(_lnbits_wallets, "ClinkWallet"):
+        _lnbits_wallets.ClinkWallet = ClinkWallet
+        logger.info("clink: registered ClinkWallet as an LNbits funding source")
+except Exception as exc:  # pragma: no cover - defensive
+    logger.warning(f"clink: could not register ClinkWallet funding source: {exc}")
 
 clink_ext: APIRouter = APIRouter(prefix="/clink", tags=["clink"])
 clink_ext.include_router(clink_ext_generic)
