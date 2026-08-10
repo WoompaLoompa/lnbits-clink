@@ -34,7 +34,7 @@
     </div>
   </q-card-section>
   <q-tabs v-model="tab" dense class="text-grey" align="left">
-    <q-tab name="plans" label="Plans" icon="event_repeat" ></q-tab>
+    <q-tab name="plans" label="Plans" icon="event" ></q-tab>
     <q-tab name="subscriptions" label="Subscriptions" icon="pending_actions" ></q-tab>
   </q-tabs>
   <q-separator ></q-separator>
@@ -53,7 +53,7 @@
     <q-list bordered separator>
       <q-item v-for="p in plans" :key="p.id">
         <q-item-section avatar>
-          <q-icon name="event_repeat" color="primary" ></q-icon>
+          <q-icon name="event" color="primary" ></q-icon>
         </q-item-section>
         <q-item-section>
           <q-item-label>
