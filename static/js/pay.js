@@ -5,8 +5,8 @@ window.app = Vue.createApp({
   mixins: [windowMixin],
   data() {
     return {
-      wallets: this.g.user.wallets,
-      wallet: this.g.user.wallets[0],
+      wallets: window.g.user.wallets,
+      wallet: window.g.user.wallets[0],
       noffer: '',
       amount: null,
       loading: false,

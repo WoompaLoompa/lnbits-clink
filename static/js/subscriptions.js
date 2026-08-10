@@ -11,8 +11,8 @@ window.app = Vue.createApp({
   data() {
     return {
       tab: 'plans',
-      wallets: this.g.user.wallets,
-      wallet: this.g.user.wallets[0],
+      wallets: window.g.user.wallets,
+      wallet: window.g.user.wallets[0],
       plans: [],
       subscriptions: [],
       planDialog: {
