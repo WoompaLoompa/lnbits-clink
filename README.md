@@ -2,7 +2,7 @@
 
 > ### Bitcoin Lightning Payment Gateway, Subscriptions Auto-Renew & Funding Source for LNbits (via CLINK)
 
-![Lightning.pub as LNbits Funding Source via CLINK extesion](https://github.com/WoompaLoompa/lnbits-clink/blob/main/static/clink-lnbits-funding-source.png?raw=true)
+![Lightning.pub as LNbits Funding Source via CLINK extension](https://github.com/WoompaLoompa/lnbits-clink/blob/main/static/clink-lnbits-funding-source.png?raw=true)
 
 Nostr-native Lightning payments for LNbits, built on
 [CLINK](https://github.com/shocknet/CLINK) — the Nostr-native Lightning standard
@@ -12,13 +12,16 @@ Announcement https://stacker.news/items/1543884/r/06bc1a977d
 
 Demo: https://clink-lnbits.fly.dev
 
-## Features (v0.1.0 - coming)
+## Features (v0.1.6)
 
 - **Offers** — publish a `noffer1...` and receive Lightning payments over Nostr
 - **Pay offers** — request and pay invoices from remote CLINK offers
 - **Subscriptions** — native subscription engine with auto-renew via debits
 - **Wallet Debits** — node service that draws payments from wallets over CLINK
-- **CLINK as funding source** — run this LNbits instance backed by CLINK
+- **CLINK as funding source** — run this LNbits instance backed by CLINK, fully
+  paying: receive and pay invoices via a Lightning.pub account
+  (`nprofile1...` connection string) with incoming payments tracked through the
+  node's `GetUserOperations` API.
 
 ## Development
 

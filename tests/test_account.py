@@ -165,8 +165,54 @@ def test_account_request_timeout(monkeypatch):
         asyncio.run(account_request(account, "GetUserInfo"))
 
 
+def test_account_request_skips_stale_response(monkeypatch):
+    account, node_priv, node_pub = _account_fixture(monkeypatch)
+
+    async def fake_request_response(relays, request, response_filter, timeout, match=None):
+        requester_priv, _ = derive_keys(account)
+        request_payload = _decrypt_request(request, requester_priv, node_pub)
+        correct = _build_response(
+            request,
+            requester_priv,
+            node_pub,
+            node_priv,
+            {
+                "status": "OK",
+                "userId": "user_1",
+                "balance": 777,
+                "requestId": request_payload["requestId"],
+            },
+        )
+        stale = _build_response(
+            request,
+            requester_priv,
+            node_pub,
+            node_priv,
+            {
+                "status": "OK",
+                "userId": "user_1",
+                "balance": 111,
+                "requestId": "0" * 16,
+            },
+        )
+        assert match is not None
+        assert match(stale) is False
+        assert match(correct) is True
+        return correct
+
+    monkeypatch.setattr("clink.account.request_response", fake_request_response)
+
+    info = asyncio.run(account_request(account, "GetUserInfo"))
+    assert info["balance"] == 777
+
+
 def test_user_api_helpers(monkeypatch):
     account, node_priv, node_pub = _account_fixture(monkeypatch)
+
+    class _FakeDecoded:
+        amount_msat = 1000
+
+    monkeypatch.setattr("clink.account.bolt11_decode", lambda bolt11: _FakeDecoded())
 
     def responder(request):
         requester_priv, _ = derive_keys(account)
@@ -215,9 +261,75 @@ def test_user_api_helpers(monkeypatch):
     bolt11 = asyncio.run(new_invoice(account, 1000, memo="test"))
     assert bolt11 == "lnbc100n1test"
 
-    pay = asyncio.run(pay_invoice(account, "lnbc1x"))
+    pay = asyncio.run(pay_invoice(account, "lnbc1x", amount_sats=100))
     assert pay["preimage"] == "ab" * 32
     assert pay["amount_paid"] == 100
 
     state = asyncio.run(get_payment_state(account, "lnbc1x"))
     assert state["paid_at_unix"] == 1710000000
+
+
+def test_pay_invoice_fixed_amount_sends_zero(monkeypatch):
+    account, node_priv, node_pub = _account_fixture(monkeypatch)
+    sent_body = {}
+
+    def responder(request):
+        requester_priv, _ = derive_keys(account)
+        request_payload = _decrypt_request(request, requester_priv, node_pub)
+        sent_body.update(request_payload.get("body") or {})
+        result = {
+            "status": "OK",
+            "preimage": "cd" * 32,
+            "requestId": request_payload["requestId"],
+        }
+        return _build_response(request, requester_priv, node_pub, node_priv, result)
+
+    _install_responder(monkeypatch, responder)
+
+    class _FakeDecoded:
+        amount_msat = 11000
+
+    monkeypatch.setattr("clink.account.bolt11_decode", lambda bolt11: _FakeDecoded())
+
+    pay = asyncio.run(pay_invoice(account, "lnbc110n1whatever"))
+    assert pay["preimage"] == "cd" * 32
+    assert sent_body == {"invoice": "lnbc110n1whatever", "amount": 0}
+
+
+def test_pay_invoice_amountless_uses_explicit_amount(monkeypatch):
+    account, node_priv, node_pub = _account_fixture(monkeypatch)
+    sent_body = {}
+
+    def responder(request):
+        requester_priv, _ = derive_keys(account)
+        request_payload = _decrypt_request(request, requester_priv, node_pub)
+        sent_body.update(request_payload.get("body") or {})
+        result = {
+            "status": "OK",
+            "preimage": "ef" * 32,
+            "requestId": request_payload["requestId"],
+        }
+        return _build_response(request, requester_priv, node_pub, node_priv, result)
+
+    _install_responder(monkeypatch, responder)
+
+    class _FakeDecoded:
+        amount_msat = None
+
+    monkeypatch.setattr("clink.account.bolt11_decode", lambda bolt11: _FakeDecoded())
+
+    pay = asyncio.run(pay_invoice(account, "lnbc1x", amount_sats=7))
+    assert pay["preimage"] == "ef" * 32
+    assert sent_body == {"invoice": "lnbc1x", "amount": 7}
+
+
+def test_pay_invoice_amountless_without_amount_rejected(monkeypatch):
+    account, node_priv, node_pub = _account_fixture(monkeypatch)
+
+    class _FakeDecoded:
+        amount_msat = None
+
+    monkeypatch.setattr("clink.account.bolt11_decode", lambda bolt11: _FakeDecoded())
+
+    with pytest.raises(AccountError, match="amountless"):
+        asyncio.run(pay_invoice(account, "lnbc1whatever"))

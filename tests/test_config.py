@@ -10,7 +10,7 @@ REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
 def test_config_json_valid():
     config = json.loads((REPO_ROOT / "config.json").read_text())
     assert config["id"] == "clink"
-    assert config["name"] == "CLINK"
+    assert config["name"] == "CLINK — Recurring Payments"
     assert config["license"] == "GPL-3.0"
     assert config["min_lnbits_version"]
     assert config["tile"] == "/clink/static/clink.png"

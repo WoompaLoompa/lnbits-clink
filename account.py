@@ -34,6 +34,7 @@ import hashlib
 import json
 import secrets
 
+from bolt11 import decode as bolt11_decode
 from coincurve import PrivateKey
 from loguru import logger
 
@@ -121,13 +122,25 @@ async def account_request(
         "since": event["created_at"] - 5,
     }
     relays = await _relay_list(parsed.relay)
+
+    def _response_is_for_request(response_event: dict) -> bool:
+        if response_event.get("pubkey") != parsed.pubkey:
+            return False
+        try:
+            payload = json.loads(
+                decrypt_v1(response_event["content"], conversation_key)
+            )
+        except Exception:
+            return False
+        return payload.get("requestId") == request_id
+
     try:
         response_event = await request_response(
             relays,
             event,
             response_filter,
             timeout=timeout,
-            match=lambda e: e.get("pubkey") == parsed.pubkey,
+            match=_response_is_for_request,
         )
     except asyncio.TimeoutError as exc:
         raise AccountError(
@@ -181,20 +194,71 @@ async def pay_invoice(
     amount_sats: int | None = None,
     timeout: float = REQUEST_TIMEOUT_SECONDS,
 ) -> dict:
-    """Pay a BOLT11 invoice from the node user's balance."""
-    body: dict = {"invoice": bolt11}
-    if amount_sats is not None:
-        body["amount"] = int(amount_sats)
-    result = await account_request(account, "PayInvoice", body=body, timeout=timeout)
+    """Pay a BOLT11 invoice from the node user's balance.
+
+    The node requires the ``amount`` field in the request body: ``0`` for a
+    fixed-amount invoice (the invoice amount is used), or the sats to pay for
+    an amountless invoice.
+    """
+    decoded = _decode_bolt11(bolt11)
+    if decoded.amount_msat:
+        body_amount = 0
+    elif amount_sats is None:
+        raise AccountError("Cannot determine invoice amount (amountless invoice).")
+    else:
+        body_amount = int(amount_sats)
+    result = await account_request(
+        account,
+        "PayInvoice",
+        body={"invoice": bolt11, "amount": body_amount},
+        timeout=timeout,
+    )
     return result
+
+
+def _decode_bolt11(bolt11: str):
+    try:
+        return bolt11_decode(bolt11)
+    except Exception as exc:
+        raise AccountError(f"Cannot decode invoice for PayInvoice: {exc}") from exc
 
 
 async def get_payment_state(
     account: str, bolt11: str, timeout: float = REQUEST_TIMEOUT_SECONDS
 ) -> dict:
-    """Query the state of a previously created/paid invoice."""
+    """Query the state of a previously paid (outgoing) invoice."""
     result = await account_request(
         account, "GetPaymentState", body={"invoice": bolt11}, timeout=timeout
+    )
+    return result
+
+
+async def get_user_operations(
+    account: str,
+    cursor: tuple[int, int] = (0, 0),
+    max_size: int = 100,
+    timeout: float = REQUEST_TIMEOUT_SECONDS,
+) -> dict:
+    """Fetch the node user's payment operations.
+
+    The response carries six ``UserOperations`` lists; incoming BOLT11
+    invoices that have been paid appear in
+    ``latestIncomingInvoiceOperations.operations`` (identifier = bolt11,
+    ``paidAtUnix`` > 0). The ``cursor``/``max_size`` pair paginates the
+    lists (ascending ``paid_at_unix`` / ``serial_id``).
+    """
+    cursor_body: dict = {"id": int(cursor[0]), "ts": int(cursor[1])}
+    body: dict = {
+        "latestIncomingInvoice": dict(cursor_body),
+        "latestIncomingTx": dict(cursor_body),
+        "latestIncomingUserToUserPayment": dict(cursor_body),
+        "latestOutgoingInvoice": dict(cursor_body),
+        "latestOutgoingTx": dict(cursor_body),
+        "latestOutgoingUserToUserPayment": dict(cursor_body),
+        "max_size": int(max_size),
+    }
+    result = await account_request(
+        account, "GetUserOperations", body=body, timeout=timeout
     )
     return result
 

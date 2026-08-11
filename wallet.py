@@ -40,6 +40,9 @@ from .account import (
     get_user_info,
 )
 from .account import (
+    get_user_operations as account_get_user_operations,
+)
+from .account import (
     new_invoice as account_new_invoice,
 )
 from .account import (
@@ -60,6 +63,9 @@ from .pay import (
 
 NOFFER_ENV_VAR = "LNBITS_CLINK_FUNDING_NOFFER"
 ACCOUNT_ENV_VAR = "LNBITS_CLINK_FUNDING_ACCOUNT"
+
+MAX_INCOMING_PAGES = 5
+INCOMING_PAGE_SIZE = 100
 
 
 def _setting_or_env(setting_name: str, env_var: str) -> str | None:
@@ -119,12 +125,12 @@ class ClinkWallet(Wallet):
         unhashed_description: bytes | None = None,
         **kwargs,
     ) -> InvoiceResponse:
-        noffer = _configured_noffer()
-        if noffer:
-            return await self._create_invoice_offer(noffer, amount, memo)
         account = _configured_account()
         if account:
             return await self._create_invoice_account(account, amount, memo)
+        noffer = _configured_noffer()
+        if noffer:
+            return await self._create_invoice_offer(noffer, amount, memo)
         return InvoiceResponse(False, error_message=_config_error_message())
 
     async def _create_invoice_offer(
@@ -244,17 +250,14 @@ class ClinkWallet(Wallet):
             )
         except Exception:
             pass
-        if not preimage:
-            return PaymentResponse(
-                ok=False,
-                error_message="CLINK payment did not return a preimage.",
-                checking_id=checking_id,
-            )
+        # The node only responds without error once the payment settled; for
+        # invoices minted on the same node (internal payments) it returns an
+        # empty preimage, so an empty preimage is not a failure.
         return PaymentResponse(
             ok=True,
             checking_id=checking_id,
             fee_msat=(service_fee + network_fee) * 1000,
-            preimage=preimage,
+            preimage=preimage or None,
         )
 
     async def _status_for(self, checking_id: str) -> PaymentStatus:
@@ -276,8 +279,49 @@ class ClinkWallet(Wallet):
             fee_msat=fee * 1000,
         )
 
+    async def _incoming_status_for(self, checking_id: str) -> PaymentStatus:
+        account = _configured_account()
+        if account is None:
+            return PaymentPendingStatus()
+        invoice = await get_invoice_by_hash(checking_id)
+        if invoice is None or not invoice.bolt11:
+            return PaymentPendingStatus()
+        cursor_id, cursor_ts = 0, 0
+        for _ in range(MAX_INCOMING_PAGES):
+            try:
+                operations = await account_get_user_operations(
+                    account,
+                    cursor=(cursor_id, cursor_ts),
+                    max_size=INCOMING_PAGE_SIZE,
+                )
+            except Exception:
+                return PaymentPendingStatus()
+            status = self._paid_incoming_for(operations, invoice.bolt11)
+            if status is not None:
+                return status
+            incoming = operations.get("latestIncomingInvoiceOperations") or {}
+            to_index = incoming.get("toIndex") or {}
+            next_id, next_ts = to_index.get("id", 0), to_index.get("ts", 0)
+            if (next_id, next_ts) == (cursor_id, cursor_ts):
+                return PaymentPendingStatus()
+            cursor_id, cursor_ts = next_id, next_ts
+        return PaymentPendingStatus()
+
+    @staticmethod
+    def _paid_incoming_for(operations: dict, bolt11: str) -> PaymentStatus | None:
+        incoming = operations.get("latestIncomingInvoiceOperations") or {}
+        for op in incoming.get("operations") or []:
+            if op.get("identifier") != bolt11:
+                continue
+            paid_at = op.get("paidAtUnix")
+            if not paid_at:
+                return None
+            fee = (op.get("service_fee") or 0) + (op.get("network_fee") or 0)
+            return PaymentSuccessStatus(fee_msat=fee * 1000)
+        return None
+
     async def get_invoice_status(self, checking_id: str) -> PaymentStatus:
-        return await self._status_for(checking_id)
+        return await self._incoming_status_for(checking_id)
 
     async def get_payment_status(self, checking_id: str) -> PaymentStatus:
         return await self._status_for(checking_id)

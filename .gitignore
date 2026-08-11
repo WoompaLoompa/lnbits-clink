@@ -7,3 +7,4 @@ node_modules/
 .ruff_cache/
 uv.lock
 data/
+drafts/

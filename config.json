@@ -1,7 +1,7 @@
 {
   "id": "clink",
-  "name": "CLINK",
-  "short_description": "Nostr-native Lightning: offers, subscriptions and wallet debits",
+  "name": "CLINK — Recurring Payments",
+  "short_description": "Recurring payments & subscriptions with Lightning auto-renew via CLINK — Nostr-native offers, wallet debits and funding source",
   "tile": "/clink/static/clink.png",
   "min_lnbits_version": "1.0.0",
   "license": "GPL-3.0",
